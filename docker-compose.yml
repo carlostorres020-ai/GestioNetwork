@@ -1,0 +1,58 @@
+services:
+  # ===========================================================================
+  # 1. MOTOR DE BASE DE DATOS GEOGRÁFICA (POSTGRESQL + POSTGIS)
+  # ===========================================================================
+  db_gis:
+    image: postgis/postgis:15-3.3-alpine
+    container_name: gtrack_db_gis
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=gtrack_secure_pass_2026
+      - POSTGRES_DB=gestionetwork
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # ===========================================================================
+  # 2. BROKER DE MEMORIA EN CACHÉ (REDIS)
+  # ===========================================================================
+  redis:
+    image: redis:7.2-alpine
+    container_name: gtrack_redis
+    restart: always
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+
+  # ===========================================================================
+  # 3. BACKEND CORE API (FASTAPI)
+  # ===========================================================================
+  backend:
+    build: ./backend
+    container_name: gtrack_backend
+    restart: always
+    ports:
+      - "127.0.0.1:1035:8000"
+    environment:
+      - ENV=production
+      - DATABASE_URL=postgresql+asyncpg://postgres:gtrack_secure_pass_2026@db_gis:5432/gestionetwork
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET=GtrackSecureNetworkDefaultKey32BytesForEncryption!
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=gtrack_secure_pass_2026
+      - POSTGRES_DB=gestionetwork
+      - REDIS_PASSWORD=
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - db_gis
+      - redis
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
