@@ -9,7 +9,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Ejecutar despliegue en servidor
+      - name: Checkout del codigo
+        uses: actions/checkout@v3
+
+      - name: Ejecutar despliegue en servidor via SSH
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_HOST }}
